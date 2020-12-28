@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
+	"github.com/tendermint/tendermint/evm/common"
+	"github.com/tendermint/tendermint/evm/common/hexutil"
+	"github.com/tendermint/tendermint/evm/common/math"
 )
 
 var _ = (*structLogMarshaling)(nil)

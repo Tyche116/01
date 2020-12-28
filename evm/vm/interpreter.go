@@ -20,9 +20,11 @@ import (
 	"hash"
 	"sync/atomic"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/log"
+	"fmt"
+
+	"github.com/tendermint/tendermint/evm/common"
+	"github.com/tendermint/tendermint/evm/common/math"
+	// "github.com/ethereum/go-ethereum/log"
 )
 
 // Config are the configuration options for the Interpreter
@@ -120,7 +122,8 @@ func NewEVMInterpreter(evm *EVM, cfg Config) *EVMInterpreter {
 			if err := EnableEIP(eip, &jt); err != nil {
 				// Disable it, so caller can check if it's activated or not
 				cfg.ExtraEips = append(cfg.ExtraEips[:i], cfg.ExtraEips[i+1:]...)
-				log.Error("EIP activation failed", "eip", eip, "error", err)
+				// log.Error("EIP activation failed", "eip", eip, "error", err)
+				fmt.Errorf("EIP activation failed", "eip", eip, "error", err)
 			}
 		}
 		cfg.JumpTable = jt

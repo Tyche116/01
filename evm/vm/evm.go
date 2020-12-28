@@ -22,10 +22,10 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
 	"github.com/holiman/uint256"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/evm/common"
+	"github.com/tendermint/tendermint/evm/params"
 )
 
 // emptyCodeHash is used by create to ensure deployment is disallowed to already
@@ -44,34 +44,34 @@ type (
 
 // ActivePrecompiles returns the addresses of the precompiles enabled with the current
 // configuration
-func (evm *EVM) ActivePrecompiles() []common.Address {
-	switch {
-	case evm.chainRules.IsYoloV2:
-		return PrecompiledAddressesYoloV2
-	case evm.chainRules.IsIstanbul:
-		return PrecompiledAddressesIstanbul
-	case evm.chainRules.IsByzantium:
-		return PrecompiledAddressesByzantium
-	default:
-		return PrecompiledAddressesHomestead
-	}
-}
+// func (evm *EVM) ActivePrecompiles() []common.Address {
+// 	switch {
+// 	case evm.chainRules.IsYoloV2:
+// 		return PrecompiledAddressesYoloV2
+// 	case evm.chainRules.IsIstanbul:
+// 		return PrecompiledAddressesIstanbul
+// 	case evm.chainRules.IsByzantium:
+// 		return PrecompiledAddressesByzantium
+// 	default:
+// 		return PrecompiledAddressesHomestead
+// 	}
+// }
 
-func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
-	var precompiles map[common.Address]PrecompiledContract
-	switch {
-	case evm.chainRules.IsYoloV2:
-		precompiles = PrecompiledContractsYoloV2
-	case evm.chainRules.IsIstanbul:
-		precompiles = PrecompiledContractsIstanbul
-	case evm.chainRules.IsByzantium:
-		precompiles = PrecompiledContractsByzantium
-	default:
-		precompiles = PrecompiledContractsHomestead
-	}
-	p, ok := precompiles[addr]
-	return p, ok
-}
+// func (evm *EVM) precompile(addr common.Address) (PrecompiledContract, bool) {
+// 	var precompiles map[common.Address]PrecompiledContract
+// 	switch {
+// 	case evm.chainRules.IsYoloV2:
+// 		precompiles = PrecompiledContractsYoloV2
+// 	case evm.chainRules.IsIstanbul:
+// 		precompiles = PrecompiledContractsIstanbul
+// 	case evm.chainRules.IsByzantium:
+// 		precompiles = PrecompiledContractsByzantium
+// 	default:
+// 		precompiles = PrecompiledContractsHomestead
+// 	}
+// 	p, ok := precompiles[addr]
+// 	return p, ok
+// }
 
 // run runs the given contract and takes care of running precompiles with a fallback to the byte code interpreter.
 func run(evm *EVM, contract *Contract, input []byte, readOnly bool) ([]byte, error) {
@@ -158,32 +158,32 @@ type EVM struct {
 
 // NewEVM returns a new EVM. The returned EVM is not thread safe and should
 // only ever be used *once*.
-func NewEVM(blockCtx BlockContext, txCtx TxContext, statedb StateDB, chainConfig *params.ChainConfig, vmConfig Config) *EVM {
+func NewEVM(blockCtx BlockContext, txCtx TxContext, statedb StateDB /*chainConfig *params.ChainConfig,*/, vmConfig Config) *EVM {
 	evm := &EVM{
-		Context:      blockCtx,
-		TxContext:    txCtx,
-		StateDB:      statedb,
-		vmConfig:     vmConfig,
-		chainConfig:  chainConfig,
-		chainRules:   chainConfig.Rules(blockCtx.BlockNumber),
+		Context:   blockCtx,
+		TxContext: txCtx,
+		StateDB:   statedb,
+		vmConfig:  vmConfig,
+		// chainConfig:  chainConfig,
+		// chainRules:   chainConfig.Rules(blockCtx.BlockNumber),
 		interpreters: make([]Interpreter, 0, 1),
 	}
 
-	if chainConfig.IsEWASM(blockCtx.BlockNumber) {
-		// to be implemented by EVM-C and Wagon PRs.
-		// if vmConfig.EWASMInterpreter != "" {
-		//  extIntOpts := strings.Split(vmConfig.EWASMInterpreter, ":")
-		//  path := extIntOpts[0]
-		//  options := []string{}
-		//  if len(extIntOpts) > 1 {
-		//    options = extIntOpts[1..]
-		//  }
-		//  evm.interpreters = append(evm.interpreters, NewEVMVCInterpreter(evm, vmConfig, options))
-		// } else {
-		// 	evm.interpreters = append(evm.interpreters, NewEWASMInterpreter(evm, vmConfig))
-		// }
-		panic("No supported ewasm interpreter yet.")
-	}
+	// if chainConfig.IsEWASM(blockCtx.BlockNumber) {
+	// 	// to be implemented by EVM-C and Wagon PRs.
+	// 	// if vmConfig.EWASMInterpreter != "" {
+	// 	//  extIntOpts := strings.Split(vmConfig.EWASMInterpreter, ":")
+	// 	//  path := extIntOpts[0]
+	// 	//  options := []string{}
+	// 	//  if len(extIntOpts) > 1 {
+	// 	//    options = extIntOpts[1..]
+	// 	//  }
+	// 	//  evm.interpreters = append(evm.interpreters, NewEVMVCInterpreter(evm, vmConfig, options))
+	// 	// } else {
+	// 	// 	evm.interpreters = append(evm.interpreters, NewEWASMInterpreter(evm, vmConfig))
+	// 	// }
+	// 	panic("No supported ewasm interpreter yet.")
+	// }
 
 	// vmConfig.EVMInterpreter will be used by EVM-C, it won't be checked here
 	// as we always want to have the built-in EVM as the failover option.
@@ -233,10 +233,11 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		return nil, gas, ErrInsufficientBalance
 	}
 	snapshot := evm.StateDB.Snapshot()
-	p, isPrecompile := evm.precompile(addr)
+	// p, isPrecompile := evm.precompile(addr)
 
 	if !evm.StateDB.Exist(addr) {
-		if !isPrecompile && evm.chainRules.IsEIP158 && value.Sign() == 0 {
+		// if !isPrecompile && evm.chainRules.IsEIP158 && value.Sign() == 0 {
+		if evm.chainRules.IsEIP158 && value.Sign() == 0 {
 			// Calling a non existing account, don't do anything, but ping the tracer
 			if evm.vmConfig.Debug && evm.depth == 0 {
 				evm.vmConfig.Tracer.CaptureStart(caller.Address(), addr, false, input, gas, value)
@@ -256,24 +257,24 @@ func (evm *EVM) Call(caller ContractRef, addr common.Address, input []byte, gas 
 		}(gas, time.Now())
 	}
 
-	if isPrecompile {
-		ret, gas, err = RunPrecompiledContract(p, input, gas)
+	// if isPrecompile {
+	// 	ret, gas, err = RunPrecompiledContract(p, input, gas)
+	// } else {
+	// Initialise a new contract and set the code that is to be used by the EVM.
+	// The contract is a scoped environment for this execution context only.
+	code := evm.StateDB.GetCode(addr)
+	if len(code) == 0 {
+		ret, err = nil, nil // gas is unchanged
 	} else {
-		// Initialise a new contract and set the code that is to be used by the EVM.
-		// The contract is a scoped environment for this execution context only.
-		code := evm.StateDB.GetCode(addr)
-		if len(code) == 0 {
-			ret, err = nil, nil // gas is unchanged
-		} else {
-			addrCopy := addr
-			// If the account has no code, we can abort here
-			// The depth-check is already done, and precompiles handled above
-			contract := NewContract(caller, AccountRef(addrCopy), value, gas)
-			contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), code)
-			ret, err = run(evm, contract, input, false)
-			gas = contract.Gas
-		}
+		addrCopy := addr
+		// If the account has no code, we can abort here
+		// The depth-check is already done, and precompiles handled above
+		contract := NewContract(caller, AccountRef(addrCopy), value, gas)
+		contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), code)
+		ret, err = run(evm, contract, input, false)
+		gas = contract.Gas
 	}
+	// }
 	// When an error was returned by the EVM or when setting the creation code
 	// above we revert to the snapshot and consume any gas remaining. Additionally
 	// when we're in homestead this also counts for code storage gas errors.
@@ -314,17 +315,17 @@ func (evm *EVM) CallCode(caller ContractRef, addr common.Address, input []byte, 
 	var snapshot = evm.StateDB.Snapshot()
 
 	// It is allowed to call precompiles, even via delegatecall
-	if p, isPrecompile := evm.precompile(addr); isPrecompile {
-		ret, gas, err = RunPrecompiledContract(p, input, gas)
-	} else {
-		addrCopy := addr
-		// Initialise a new contract and set the code that is to be used by the EVM.
-		// The contract is a scoped environment for this execution context only.
-		contract := NewContract(caller, AccountRef(caller.Address()), value, gas)
-		contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
-		ret, err = run(evm, contract, input, false)
-		gas = contract.Gas
-	}
+	// if p, isPrecompile := evm.precompile(addr); isPrecompile {
+	// 	ret, gas, err = RunPrecompiledContract(p, input, gas)
+	// } else {
+	addrCopy := addr
+	// Initialise a new contract and set the code that is to be used by the EVM.
+	// The contract is a scoped environment for this execution context only.
+	contract := NewContract(caller, AccountRef(caller.Address()), value, gas)
+	contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
+	ret, err = run(evm, contract, input, false)
+	gas = contract.Gas
+	// }
 	if err != nil {
 		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != ErrExecutionReverted {
@@ -350,16 +351,16 @@ func (evm *EVM) DelegateCall(caller ContractRef, addr common.Address, input []by
 	var snapshot = evm.StateDB.Snapshot()
 
 	// It is allowed to call precompiles, even via delegatecall
-	if p, isPrecompile := evm.precompile(addr); isPrecompile {
-		ret, gas, err = RunPrecompiledContract(p, input, gas)
-	} else {
-		addrCopy := addr
-		// Initialise a new contract and make initialise the delegate values
-		contract := NewContract(caller, AccountRef(caller.Address()), nil, gas).AsDelegate()
-		contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
-		ret, err = run(evm, contract, input, false)
-		gas = contract.Gas
-	}
+	// if p, isPrecompile := evm.precompile(addr); isPrecompile {
+	// 	ret, gas, err = RunPrecompiledContract(p, input, gas)
+	// } else {
+	addrCopy := addr
+	// Initialise a new contract and make initialise the delegate values
+	contract := NewContract(caller, AccountRef(caller.Address()), nil, gas).AsDelegate()
+	contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
+	ret, err = run(evm, contract, input, false)
+	gas = contract.Gas
+	// }
 	if err != nil {
 		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != ErrExecutionReverted {
@@ -394,23 +395,23 @@ func (evm *EVM) StaticCall(caller ContractRef, addr common.Address, input []byte
 	// future scenarios
 	evm.StateDB.AddBalance(addr, big0)
 
-	if p, isPrecompile := evm.precompile(addr); isPrecompile {
-		ret, gas, err = RunPrecompiledContract(p, input, gas)
-	} else {
-		// At this point, we use a copy of address. If we don't, the go compiler will
-		// leak the 'contract' to the outer scope, and make allocation for 'contract'
-		// even if the actual execution ends on RunPrecompiled above.
-		addrCopy := addr
-		// Initialise a new contract and set the code that is to be used by the EVM.
-		// The contract is a scoped environment for this execution context only.
-		contract := NewContract(caller, AccountRef(addrCopy), new(big.Int), gas)
-		contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
-		// When an error was returned by the EVM or when setting the creation code
-		// above we revert to the snapshot and consume any gas remaining. Additionally
-		// when we're in Homestead this also counts for code storage gas errors.
-		ret, err = run(evm, contract, input, true)
-		gas = contract.Gas
-	}
+	// if p, isPrecompile := evm.precompile(addr); isPrecompile {
+	// 	ret, gas, err = RunPrecompiledContract(p, input, gas)
+	// } else {
+	// At this point, we use a copy of address. If we don't, the go compiler will
+	// leak the 'contract' to the outer scope, and make allocation for 'contract'
+	// even if the actual execution ends on RunPrecompiled above.
+	addrCopy := addr
+	// Initialise a new contract and set the code that is to be used by the EVM.
+	// The contract is a scoped environment for this execution context only.
+	contract := NewContract(caller, AccountRef(addrCopy), new(big.Int), gas)
+	contract.SetCallCode(&addrCopy, evm.StateDB.GetCodeHash(addrCopy), evm.StateDB.GetCode(addrCopy))
+	// When an error was returned by the EVM or when setting the creation code
+	// above we revert to the snapshot and consume any gas remaining. Additionally
+	// when we're in Homestead this also counts for code storage gas errors.
+	ret, err = run(evm, contract, input, true)
+	gas = contract.Gas
+	// }
 	if err != nil {
 		evm.StateDB.RevertToSnapshot(snapshot)
 		if err != ErrExecutionReverted {
@@ -446,9 +447,9 @@ func (evm *EVM) create(caller ContractRef, codeAndHash *codeAndHash, gas uint64,
 	evm.StateDB.SetNonce(caller.Address(), nonce+1)
 	// We add this to the access list _before_ taking a snapshot. Even if the creation fails,
 	// the access-list change should not be rolled back
-	if evm.chainRules.IsYoloV2 {
-		evm.StateDB.AddAddressToAccessList(address)
-	}
+	// if evm.chainRules.IsYoloV2 {
+	// 	evm.StateDB.AddAddressToAccessList(address)
+	// }
 	// Ensure there's no existing contract already at the designated address
 	contractHash := evm.StateDB.GetCodeHash(address)
 	if evm.StateDB.GetNonce(address) != 0 || (contractHash != (common.Hash{}) && contractHash != emptyCodeHash) {
@@ -530,4 +531,4 @@ func (evm *EVM) Create2(caller ContractRef, code []byte, gas uint64, endowment *
 }
 
 // ChainConfig returns the environment's chain configuration
-func (evm *EVM) ChainConfig() *params.ChainConfig { return evm.chainConfig }
+// func (evm *EVM) ChainConfig() *params.ChainConfig { return evm.chainConfig }

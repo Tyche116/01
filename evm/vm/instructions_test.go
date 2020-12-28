@@ -23,9 +23,9 @@ import (
 	"io/ioutil"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/tendermint/tendermint/evm/common"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/evm/params"
 	"github.com/holiman/uint256"
 )
 

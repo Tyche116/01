@@ -25,15 +25,14 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/consensus"
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/asm"
 	"github.com/ethereum/go-ethereum/core/rawdb"
 	"github.com/ethereum/go-ethereum/core/state"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/core/vm"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/tendermint/tendermint/evm/common"
+	"github.com/tendermint/tendermint/evm/types"
 )
 
 func TestDefaults(t *testing.T) {
@@ -173,17 +172,17 @@ func benchmarkEVM_Create(bench *testing.B, code string) {
 		Time:        new(big.Int).SetUint64(0),
 		Coinbase:    common.Address{},
 		BlockNumber: new(big.Int).SetUint64(1),
-		ChainConfig: &params.ChainConfig{
-			ChainID:             big.NewInt(1),
-			HomesteadBlock:      new(big.Int),
-			ByzantiumBlock:      new(big.Int),
-			ConstantinopleBlock: new(big.Int),
-			DAOForkBlock:        new(big.Int),
-			DAOForkSupport:      false,
-			EIP150Block:         new(big.Int),
-			EIP155Block:         new(big.Int),
-			EIP158Block:         new(big.Int),
-		},
+		// ChainConfig: &params.ChainConfig{
+		// 	ChainID:             big.NewInt(1),
+		// 	HomesteadBlock:      new(big.Int),
+		// 	ByzantiumBlock:      new(big.Int),
+		// 	ConstantinopleBlock: new(big.Int),
+		// 	DAOForkBlock:        new(big.Int),
+		// 	DAOForkSupport:      false,
+		// 	EIP150Block:         new(big.Int),
+		// 	EIP155Block:         new(big.Int),
+		// 	EIP158Block:         new(big.Int),
+		// },
 		EVMConfig: vm.Config{},
 	}
 	// Warm up the intpools and stuff
@@ -365,14 +364,15 @@ func TestJumpSub1024Limit(t *testing.T) {
 	tracer := stepCounter{inner: vm.NewJSONLogger(nil, os.Stdout)}
 	// Enable 2315
 	_, _, err := Call(address, nil, &Config{State: state,
-		GasLimit:    20000,
-		ChainConfig: params.AllEthashProtocolChanges,
-		EVMConfig: vm.Config{
-			ExtraEips: []int{2315},
-			Debug:     true,
-			//Tracer:    vm.NewJSONLogger(nil, os.Stdout),
-			Tracer: &tracer,
-		}})
+		GasLimit: 20000,
+		// ChainConfig: params.AllEthashProtocolChanges,
+		// EVMConfig: vm.Config{
+		// 	ExtraEips: []int{2315},
+		// 	Debug:     true,
+		// 	//Tracer:    vm.NewJSONLogger(nil, os.Stdout),
+		// 	Tracer: &tracer,
+		// }
+	})
 	exp := "return stack limit reached"
 	if err.Error() != exp {
 		t.Fatalf("expected %v, got %v", exp, err)
@@ -400,13 +400,14 @@ func TestReturnSubShallow(t *testing.T) {
 
 	// Enable 2315
 	_, _, err := Call(address, nil, &Config{State: state,
-		GasLimit:    10000,
-		ChainConfig: params.AllEthashProtocolChanges,
-		EVMConfig: vm.Config{
-			ExtraEips: []int{2315},
-			Debug:     true,
-			Tracer:    &tracer,
-		}})
+		GasLimit: 10000,
+		// ChainConfig: params.AllEthashProtocolChanges,
+		// EVMConfig: vm.Config{
+		// 	ExtraEips: []int{2315},
+		// 	Debug:     true,
+		// 	Tracer:    &tracer,
+		// }
+	})
 
 	exp := "invalid retsub"
 	if err.Error() != exp {

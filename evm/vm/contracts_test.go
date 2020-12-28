@@ -24,7 +24,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/tendermint/tendermint/evm/common"
 )
 
 // precompiledTest defines the input/output pairs for precompiled contract tests.
@@ -112,84 +112,84 @@ func testPrecompiled(addr string, test precompiledTest, t *testing.T) {
 	})
 }
 
-func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
-	p := allPrecompiles[common.HexToAddress(addr)]
-	in := common.Hex2Bytes(test.Input)
-	gas := p.RequiredGas(in) - 1
+// func testPrecompiledOOG(addr string, test precompiledTest, t *testing.T) {
+// 	p := allPrecompiles[common.HexToAddress(addr)]
+// 	in := common.Hex2Bytes(test.Input)
+// 	gas := p.RequiredGas(in) - 1
 
-	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(p, in, gas)
-		if err.Error() != "out of gas" {
-			t.Errorf("Expected error [out of gas], got [%v]", err)
-		}
-		// Verify that the precompile did not touch the input buffer
-		exp := common.Hex2Bytes(test.Input)
-		if !bytes.Equal(in, exp) {
-			t.Errorf("Precompiled %v modified input data", addr)
-		}
-	})
-}
+// 	t.Run(fmt.Sprintf("%s-Gas=%d", test.Name, gas), func(t *testing.T) {
+// 		_, _, err := RunPrecompiledContract(p, in, gas)
+// 		if err.Error() != "out of gas" {
+// 			t.Errorf("Expected error [out of gas], got [%v]", err)
+// 		}
+// 		// Verify that the precompile did not touch the input buffer
+// 		exp := common.Hex2Bytes(test.Input)
+// 		if !bytes.Equal(in, exp) {
+// 			t.Errorf("Precompiled %v modified input data", addr)
+// 		}
+// 	})
+// }
 
-func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing.T) {
-	p := allPrecompiles[common.HexToAddress(addr)]
-	in := common.Hex2Bytes(test.Input)
-	gas := p.RequiredGas(in)
-	t.Run(test.Name, func(t *testing.T) {
-		_, _, err := RunPrecompiledContract(p, in, gas)
-		if err.Error() != test.ExpectedError {
-			t.Errorf("Expected error [%v], got [%v]", test.ExpectedError, err)
-		}
-		// Verify that the precompile did not touch the input buffer
-		exp := common.Hex2Bytes(test.Input)
-		if !bytes.Equal(in, exp) {
-			t.Errorf("Precompiled %v modified input data", addr)
-		}
-	})
-}
+// func testPrecompiledFailure(addr string, test precompiledFailureTest, t *testing.T) {
+// 	p := allPrecompiles[common.HexToAddress(addr)]
+// 	in := common.Hex2Bytes(test.Input)
+// 	gas := p.RequiredGas(in)
+// 	t.Run(test.Name, func(t *testing.T) {
+// 		_, _, err := RunPrecompiledContract(p, in, gas)
+// 		if err.Error() != test.ExpectedError {
+// 			t.Errorf("Expected error [%v], got [%v]", test.ExpectedError, err)
+// 		}
+// 		// Verify that the precompile did not touch the input buffer
+// 		exp := common.Hex2Bytes(test.Input)
+// 		if !bytes.Equal(in, exp) {
+// 			t.Errorf("Precompiled %v modified input data", addr)
+// 		}
+// 	})
+// }
 
-func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
-	if test.NoBenchmark {
-		return
-	}
-	p := allPrecompiles[common.HexToAddress(addr)]
-	in := common.Hex2Bytes(test.Input)
-	reqGas := p.RequiredGas(in)
+// func benchmarkPrecompiled(addr string, test precompiledTest, bench *testing.B) {
+// 	if test.NoBenchmark {
+// 		return
+// 	}
+// 	p := allPrecompiles[common.HexToAddress(addr)]
+// 	in := common.Hex2Bytes(test.Input)
+// 	reqGas := p.RequiredGas(in)
 
-	var (
-		res  []byte
-		err  error
-		data = make([]byte, len(in))
-	)
+// 	var (
+// 		res  []byte
+// 		err  error
+// 		data = make([]byte, len(in))
+// 	)
 
-	bench.Run(fmt.Sprintf("%s-Gas=%d", test.Name, reqGas), func(bench *testing.B) {
-		bench.ReportAllocs()
-		start := time.Now()
-		bench.ResetTimer()
-		for i := 0; i < bench.N; i++ {
-			copy(data, in)
-			res, _, err = RunPrecompiledContract(p, data, reqGas)
-		}
-		bench.StopTimer()
-		elapsed := uint64(time.Since(start))
-		if elapsed < 1 {
-			elapsed = 1
-		}
-		gasUsed := reqGas * uint64(bench.N)
-		bench.ReportMetric(float64(reqGas), "gas/op")
-		// Keep it as uint64, multiply 100 to get two digit float later
-		mgasps := (100 * 1000 * gasUsed) / elapsed
-		bench.ReportMetric(float64(mgasps)/100, "mgas/s")
-		//Check if it is correct
-		if err != nil {
-			bench.Error(err)
-			return
-		}
-		if common.Bytes2Hex(res) != test.Expected {
-			bench.Error(fmt.Sprintf("Expected %v, got %v", test.Expected, common.Bytes2Hex(res)))
-			return
-		}
-	})
-}
+// 	bench.Run(fmt.Sprintf("%s-Gas=%d", test.Name, reqGas), func(bench *testing.B) {
+// 		bench.ReportAllocs()
+// 		start := time.Now()
+// 		bench.ResetTimer()
+// 		for i := 0; i < bench.N; i++ {
+// 			copy(data, in)
+// 			res, _, err = RunPrecompiledContract(p, data, reqGas)
+// 		}
+// 		bench.StopTimer()
+// 		elapsed := uint64(time.Since(start))
+// 		if elapsed < 1 {
+// 			elapsed = 1
+// 		}
+// 		gasUsed := reqGas * uint64(bench.N)
+// 		bench.ReportMetric(float64(reqGas), "gas/op")
+// 		// Keep it as uint64, multiply 100 to get two digit float later
+// 		mgasps := (100 * 1000 * gasUsed) / elapsed
+// 		bench.ReportMetric(float64(mgasps)/100, "mgas/s")
+// 		//Check if it is correct
+// 		if err != nil {
+// 			bench.Error(err)
+// 			return
+// 		}
+// 		if common.Bytes2Hex(res) != test.Expected {
+// 			bench.Error(fmt.Sprintf("Expected %v, got %v", test.Expected, common.Bytes2Hex(res)))
+// 			return
+// 		}
+// 	})
+// }
 
 // Benchmarks the sample inputs from the ECRECOVER precompile.
 func BenchmarkPrecompiledEcrecover(bench *testing.B) {
@@ -242,16 +242,16 @@ func BenchmarkPrecompiledModExpEip2565(b *testing.B) { benchJson("modexp_eip2565
 func TestPrecompiledBn256Add(t *testing.T)      { testJson("bn256Add", "06", t) }
 func BenchmarkPrecompiledBn256Add(b *testing.B) { benchJson("bn256Add", "06", b) }
 
-// Tests OOG
-func TestPrecompiledModExpOOG(t *testing.T) {
-	modexpTests, err := loadJson("modexp")
-	if err != nil {
-		t.Fatal(err)
-	}
-	for _, test := range modexpTests {
-		testPrecompiledOOG("05", test, t)
-	}
-}
+// // Tests OOG
+// func TestPrecompiledModExpOOG(t *testing.T) {
+// 	modexpTests, err := loadJson("modexp")
+// 	if err != nil {
+// 		t.Fatal(err)
+// 	}
+// 	for _, test := range modexpTests {
+// 		testPrecompiledOOG("05", test, t)
+// 	}
+// }
 
 // Tests the sample inputs from the elliptic curve scalar multiplication EIP 213.
 func TestPrecompiledBn256ScalarMul(t *testing.T)      { testJson("bn256ScalarMul", "07", t) }

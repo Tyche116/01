@@ -25,11 +25,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/tendermint/tendermint/evm/common"
+	"github.com/tendermint/tendermint/evm/common/hexutil"
+	"github.com/tendermint/tendermint/evm/common/math"
+	"github.com/tendermint/tendermint/evm/types"
+	// "github.com/tendermint/tendermint/evm/params"
 )
 
 var errTraceLimitReached = errors.New("the number of logs reached the specified limit")
@@ -55,7 +55,7 @@ type LogConfig struct {
 	Debug             bool // print output during capture end
 	Limit             int  // maximum length of output, but zero means unlimited
 	// Chain overrides, can be used to execute a trace using future fork rules
-	Overrides *params.ChainConfig `json:"overrides,omitempty"`
+	// Overrides *params.ChainConfig `json:"overrides,omitempty"`
 }
 
 //go:generate gencodec -type StructLog -field-override structLogMarshaling -out gen_structlog.go

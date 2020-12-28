@@ -19,9 +19,9 @@ package vm
 import (
 	"errors"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/math"
-	"github.com/ethereum/go-ethereum/params"
+	"github.com/tendermint/tendermint/evm/common"
+	"github.com/tendermint/tendermint/evm/common/math"
+	"github.com/tendermint/tendermint/evm/params"
 )
 
 // memoryGasCost calculates the quadratic gas for memory expansion. It does so
